@@ -1,4 +1,5 @@
 use libc::{getchar, putchar};
+#[allow(dead_code)]
 enum InterpreterState {
     Backward,
     Forward,
@@ -6,12 +7,22 @@ enum InterpreterState {
 fn main() {
     let source = std::fs::read_to_string("src/hello.bf")
         .unwrap()
-        .split(|f| f == '\n' || f == '\r')
+        .split(|f| f == '\n' || f == '\r' || f == ' ')
         .filter(|s| !s.is_empty())
         .into_iter()
         .map(|str| str.to_string())
         .collect::<String>()
         .chars()
+        .filter(|p| {
+            *p == '+'
+                || *p == '-'
+                || *p == ','
+                || *p == '.'
+                || *p == '['
+                || *p == ']'
+                || *p == '<'
+                || *p == '>'
+        })
         .collect::<Vec<char>>();
     // let source = ",+++----".chars().collect::<Vec<char>>();
 
@@ -20,6 +31,7 @@ fn main() {
     let mut cells: [i32; 10] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let mut prevjumpnonzero: Option<usize> = None;
     let mut prevjumpzero: Option<usize> = None;
+
     let mut inter_state = InterpreterState::Forward;
     println!("{:?}", source);
     loop {
@@ -38,9 +50,7 @@ fn main() {
             ']' => {
                 if cells[pointerindex] == 0 {
                     prevjumpzero = Some(index);
-                  
-                }
-                else {
+                } else {
                     match prevjumpnonzero {
                         Some(point) => {
                             index = point;
@@ -51,21 +61,20 @@ fn main() {
                     }
                 }
             }
-            '[' =>{
-                if cells[pointerindex] !=0{
-                    prevjumpnonzero =Some(index);
-                }
-                else {
+            '[' => {
+                if cells[pointerindex] != 0 {
+                    prevjumpnonzero = Some(index);
+                } else {
                     match prevjumpzero {
-                        Some(point) =>{
-                            index =point;
+                        Some(point) => {
+                            index = point;
                         }
-                        None =>{
+                        None => {
                             panic!("something is wrong")
                         }
                     }
                 }
-            },
+            }
             _ => {}
         }
         match inter_state {
